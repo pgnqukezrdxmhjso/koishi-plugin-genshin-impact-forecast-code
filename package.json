@@ -1,22 +1,49 @@
 {
   "name": "koishi-plugin-genshin-impact-forecast-code",
-  "description": "",
+  "description": "get Genshin Impact redeem code",
   "version": "0.0.1",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
+  "scripts": {
+    "build": "cd ../../ && yarn build genshin-impact-forecast-code",
+    "pub": "cd ../../ && yarn pub genshin-impact-forecast-code",
+    "fastPub": "cd ../../ && yarn bump -3 genshin-impact-forecast-code && yarn build genshin-impact-forecast-code && yarn pub genshin-impact-forecast-code",
+    "test": "node ./test/test.js"
+  },
   "files": [
     "lib",
     "dist"
   ],
+  "contributors": [
+    "pgnqukezrdxmhjso"
+  ],
+  "homepage": "https://github.com/pgnqukezrdxmhjso/koishi-plugin-genshin-impact-forecast-code",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pgnqukezrdxmhjso/koishi-plugin-genshin-impact-forecast-code.git"
+  },
   "license": "MIT",
-  "scripts": {},
   "keywords": [
     "chatbot",
     "koishi",
-    "plugin"
+    "plugin",
+    "game",
+    "Genshin Impact",
+    "Redeem code"
   ],
-  "devDependencies": {},
+  "devDependencies": {
+    "koishi-plugin-cron": "^3.1.0",
+    "koishi-plugin-message-topic-service": "^0.0.8"
+  },
   "peerDependencies": {
     "koishi": "^4.18.0"
+  },
+  "koishi": {
+    "service": {
+      "required": [
+        "messageTopicService",
+        "cron"
+      ]
+    }
   }
 }
