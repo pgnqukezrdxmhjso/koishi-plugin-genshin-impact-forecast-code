@@ -15,31 +15,44 @@ export const Config: Schema<Config> = Schema.object({});
 export function apply(ctx: Context) {
   const topic = "原神.前瞻.开播";
   ctx.messageTopicService.registerTopic(topic).then();
-  ctx.cron("0 19 * * *", async () => {
+  const cronTask = async () => {
     try {
       const rows =
         await ctx.messageTopicService.getTopicSubscribeByTopic(topic);
       if (rows.length < 1) {
         return;
       }
-      let act = await Code.getActData({ http: ctx.http });
-      const createdAt = act.data.post.created_at;
-      if (createdAt) {
-        const date = new Date(
-          +(createdAt + ((createdAt + "").length < 13 ? "000" : "")),
-        );
-        date.setHours(23, 59, 59, 999);
-        if (date.getTime() < Date.now()) {
-          return;
-        }
+      const actNotify = await Code.getActNotify({ http: ctx.http });
+      if (!actNotify.actData) {
+        actNotify.actData = (
+          await Code.getActData({ http: ctx.http, actId: actNotify.actId })
+        )?.live?.start;
+      }
+      const date = new Date(actNotify.actData);
+      const time = date.getTime();
+      if (!actNotify.actData || isNaN(time)) {
+        ctx.logger.error("没有获取到前瞻时间");
+        return;
+      }
+      const nowS = new Date();
+      const nowE = new Date();
+      nowS.setHours(0, 0, 0, 0);
+      nowE.setHours(23, 59, 59, 999);
+      if (time < nowS.getTime() || nowE.getTime() < time) {
+        return;
       }
       ctx.messageTopicService
-        .sendMessageToTopic(topic, "今天有原神前瞻！")
+        .sendMessageToTopic(topic, Code.liveBroadcastTime(date))
         .then();
     } catch (e) {
+      if (e.eMsg) {
+        ctx.logger.debug(e);
+        return;
+      }
       ctx.logger.error(e);
     }
-  });
+  };
+  ctx.cron("45 19 * * *", cronTask);
   ctx.command("原神前瞻订阅").action(async ({ session }) => {
     await ctx.messageTopicService.topicSubscribe({
       platform: session.bot.platform,
