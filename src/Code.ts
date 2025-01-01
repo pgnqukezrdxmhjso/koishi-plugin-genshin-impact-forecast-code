@@ -130,7 +130,7 @@ const Code = {
     return codes.join("\n");
   },
   liveBroadcastTime(date: Date) {
-    return `前瞻直播将于${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}开启`;
+    return `原神前瞻直播将于${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}开启`;
   },
   async get({ http }: { http: HTTP }): Promise<string> {
     const actNotify = await Code.getActNotify({ http });
