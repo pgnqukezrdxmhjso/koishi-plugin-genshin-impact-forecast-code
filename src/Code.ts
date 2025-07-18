@@ -49,11 +49,11 @@ const Code = {
   async getActNotify({ http }: { http: HTTP }) {
     const data = await getUrl({
       http,
-      url: "https://bbs-api.miyoushe.com/post/wapi/userPost?size=20&uid=75276550",
+      url: "https://bbs-api.miyoushe.com/post/wapi/userPost?size=20&uid=75276539",
     });
     const list: any[] = data?.list || [];
     const target = list.filter((item) =>
-      item?.post?.subject?.includes("版本前瞻"),
+      item?.post?.subject?.includes("前瞻特别节目预告"),
     )[0];
     if (!target) {
       throw { eMsg: "没有获取到前瞻信息" };
@@ -66,6 +66,9 @@ const Code = {
       .match(/前瞻特别节目将于([\s\S]+)正式开启/)?.[1]
       ?.replace(/[年月]/g, "-")
       .replace(/[^\d-:]+/g, " ");
+    if (!/^[0-9]{4}-/.test(actData)) {
+      actData = new Date().getFullYear() + "-" + actData;
+    }
     if (actData) {
       const date = new Date(actData);
       if (isNaN(date.getTime())) {
@@ -125,7 +128,7 @@ const Code = {
     }
     let msg = "";
     codeList.forEach((item) => {
-      if(item.code){
+      if (item.code) {
         msg += item.code + "\n";
       }
     });

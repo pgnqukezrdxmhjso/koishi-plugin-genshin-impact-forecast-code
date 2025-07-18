@@ -14,7 +14,73 @@ export const Config: Schema<Config> = Schema.object({});
 
 export function apply(ctx: Context) {
   const topic = "原神.前瞻.开播";
-  ctx.messageTopicService.registerTopic(topic).then();
+
+  ctx.command("原神前瞻订阅").action(async ({ session }) => {
+    await ctx.messageTopicService.topicSubscribe({
+      platform: session.bot.platform,
+      selfId: session.bot.selfId,
+      channelId: session.channelId,
+      bindingKey: topic,
+      enable: true,
+    });
+    return "订阅成功";
+  });
+  ctx.command("原神前瞻不订阅").action(async ({ session }) => {
+    await ctx.messageTopicService.topicSubscribe({
+      platform: session.bot.platform,
+      selfId: session.bot.selfId,
+      channelId: session.channelId,
+      bindingKey: topic,
+      enable: false,
+    });
+    return "不订阅成功";
+  });
+  ctx.command("原神前瞻").action(async ({ session }) => {
+    try {
+      const msg = await Code.get({ http: ctx.http });
+      await session.send(msg);
+    } catch (e) {
+      ctx.logger.error(e);
+      await session.send(e.eMsg ? e.eMsg : "获取失败");
+    }
+  });
+
+  let watchDayStart: number = null;
+  let watchDayEnd: number = null;
+  const startWatch = () => {
+    const nowS = new Date();
+    const nowE = new Date();
+    nowS.setHours(0, 0, 0, 0);
+    nowE.setHours(23, 59, 59, 999);
+    watchDayStart = nowS.getTime();
+    watchDayEnd = nowE.getTime();
+    watch();
+  };
+
+  const watch = () => {
+    ctx.setTimeout(
+      async () => {
+        const time = Date.now();
+        if (time < watchDayStart || watchDayEnd < time) {
+          return;
+        }
+        try {
+          const msg = await Code.get({ http: ctx.http });
+          ctx.messageTopicService
+            .sendMessageToTopic(topic, "原神兑换码\n" + msg)
+            .then();
+          if (msg.split("\n").length >= 3) {
+            return;
+          }
+        } catch (e) {
+          ctx.logger.debug(e);
+        }
+        watch();
+      },
+      5 * 60 * 1000,
+    );
+  };
+
   const todayActNotify = async () => {
     const rows = await ctx.messageTopicService.getTopicSubscribeByTopic(topic);
     if (rows.length < 1) {
@@ -60,6 +126,7 @@ export function apply(ctx: Context) {
   };
   ctx.cron("45 19 * * *", cronTask);
 
+  ctx.messageTopicService.registerTopic(topic).then();
   (async () => {
     const date = new Date();
     if (
@@ -78,70 +145,4 @@ export function apply(ctx: Context) {
       ctx.logger.error(e);
     }
   })();
-
-  let watchDayStart: number = null;
-  let watchDayEnd: number = null;
-  const startWatch = () => {
-    const nowS = new Date();
-    const nowE = new Date();
-    nowS.setHours(0, 0, 0, 0);
-    nowE.setHours(23, 59, 59, 999);
-    watchDayStart = nowS.getTime();
-    watchDayEnd = nowE.getTime();
-    watch();
-  };
-
-  const watch = () => {
-    ctx.setTimeout(
-      async () => {
-        const time = Date.now();
-        if (time < watchDayStart || watchDayEnd < time) {
-          return;
-        }
-        try {
-          const msg = await Code.get({ http: ctx.http });
-          ctx.messageTopicService
-            .sendMessageToTopic(topic, "原神兑换码\n" + msg)
-            .then();
-          if (msg.split("\n").length >= 3) {
-            return;
-          }
-        } catch (e) {
-          ctx.logger.debug(e);
-        }
-        watch();
-      },
-      5 * 60 * 1000,
-    );
-  };
-
-  ctx.command("原神前瞻订阅").action(async ({ session }) => {
-    await ctx.messageTopicService.topicSubscribe({
-      platform: session.bot.platform,
-      selfId: session.bot.selfId,
-      channelId: session.channelId,
-      bindingKey: topic,
-      enable: true,
-    });
-    return "订阅成功";
-  });
-  ctx.command("原神前瞻不订阅").action(async ({ session }) => {
-    await ctx.messageTopicService.topicSubscribe({
-      platform: session.bot.platform,
-      selfId: session.bot.selfId,
-      channelId: session.channelId,
-      bindingKey: topic,
-      enable: false,
-    });
-    return "不订阅成功";
-  });
-  ctx.command("原神前瞻").action(async ({ session }) => {
-    try {
-      const msg = await Code.get({ http: ctx.http });
-      await session.send(msg);
-    } catch (e) {
-      ctx.logger.error(e);
-      await session.send(e.eMsg ? e.eMsg : "获取失败");
-    }
-  });
 }
